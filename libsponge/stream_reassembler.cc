@@ -34,7 +34,6 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
             _hasData.pop_front();
             _hasData.push_back(0);
         }
-
     }
     //step2 merge data
     size_t data_sz = data.length();

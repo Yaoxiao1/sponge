@@ -11,6 +11,7 @@ class TCPSegment {
   private:
     TCPHeader _header{};
     Buffer _payload{};
+    
 
   public:
     //! \brief Parse the segment from a string
