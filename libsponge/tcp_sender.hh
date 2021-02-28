@@ -9,8 +9,33 @@
 #include <functional>
 #include <queue>
 
+class RetransmitTimer{
+private:
+  size_t init_time{0};
+  size_t temp_time{0};
+  size_t _init_RTO{0};
+  size_t temp_RTO{0};
+public:
+  RetransmitTimer() {}
+  RetransmitTimer(unsigned int RTO): _init_RTO(RTO), temp_RTO(RTO) {}
+  void _ms_passed(size_t msp){
+    temp_time += msp;
+  }
+  bool is_expired(){
+    return temp_time - init_time >= temp_RTO;
+  }
+  void double_RTO(){
+    temp_RTO <<= 1;
+  }
+  void reset_RTO(){
+    temp_RTO = _init_RTO;
+  }
+  void reset(){
+    init_time = 0;
+    temp_time = 0;
+  }
+};
 //! \brief The "sender" part of a TCP implementation.
-
 //! Accepts a ByteStream, divides it up into segments and sends the
 //! segments, keeps track of which segments are still in-flight,
 //! maintains the Retransmission Timer, and retransmits in-flight
@@ -22,6 +47,9 @@ class TCPSender {
 
     //! outbound queue of segments that the TCPSender wants sent
     std::queue<TCPSegment> _segments_out{};
+    
+    //! outbound queue of outstanding segments;
+    std::queue<TCPSegment> _outstanding_segs{};
 
     //! retransmission timer for the connection
     unsigned int _initial_retransmission_timeout;
@@ -31,6 +59,29 @@ class TCPSender {
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    //! the RetransmitTimer used for retransmit
+    RetransmitTimer _retransmit_timer;
+
+    //! window size of TCP receiver
+    size_t _window_size{1};
+
+    //! bytes in fligth
+    size_t _bytes_in_flight{0};
+
+    //! consecutive retransmissions
+    size_t _cons_retrans{0};
+
+    //! is fin sent?
+    bool _fin_sent = false;
+    bool _syn_sent = false;
+
+    //! limit window on right ;
+    size_t _right_limit = 0;
+    
+    //! income window is zero
+    bool _income_win_zero = false;
+
 
   public:
     //! Initialize a TCPSender
@@ -52,7 +103,7 @@ class TCPSender {
 
     //! \brief Generate an empty-payload segment (useful for creating empty ACK segments)
     void send_empty_segment();
-
+    void send_segment(TCPSegment& tseg);
     //! \brief create and send segments to fill as much of the window as possible
     void fill_window();
 
@@ -88,5 +139,7 @@ class TCPSender {
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
 };
+
+
 
 #endif  // SPONGE_LIBSPONGE_TCP_SENDER_HH
