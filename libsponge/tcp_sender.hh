@@ -77,7 +77,7 @@ class TCPSender {
     bool _syn_sent = false;
 
     //! limit window on right ;
-    size_t _right_limit = 0;
+    size_t _right_limit = 1;
     
     //! income window is zero
     bool _income_win_zero = false;

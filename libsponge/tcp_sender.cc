@@ -89,6 +89,7 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
         uint64_t checkpoint = _stream.bytes_read();
         uint64_t ack_seqno = unwrap(ackno, _isn, checkpoint);
         if (ack_seqno < _next_seqno && ack_seqno + window_size <= _right_limit) return ;
+        if (ack_seqno > _right_limit) return;
         while (!_outstanding_segs.empty()){
             auto& ft_seg = _outstanding_segs.front();
             if (unwrap(ft_seg.header().seqno, _isn, checkpoint) + ft_seg.length_in_sequence_space() <= ack_seqno){
